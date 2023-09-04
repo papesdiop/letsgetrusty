@@ -1,7 +1,7 @@
-use anyhow::{Result, Ok};
+use anyhow::Result;
 #[allow(unused_imports)]
 use crate::models::{DBState, Epic, Story, Status};
-use std::{fs::{self,File}, io::Write};
+use std::fs;
 use serde_json;
 
 
@@ -11,7 +11,7 @@ trait Database {
 }
 
 struct JSONFileDatabase {
-    pub file_path: String,
+    pub file_path: String
 }
 
 impl Database for JSONFileDatabase {
@@ -22,9 +22,7 @@ impl Database for JSONFileDatabase {
     }
         
     fn write_db(&self, db_state : &DBState) -> Result<()> {
-        let db_state_des = serde_json::to_string(db_state)?;
-        let mut file = File::create("data/db.json")?;
-        file.write_all(db_state_des.as_bytes())?;
+        fs::write(&self.file_path, serde_json::to_vec(db_state)?)?;
         Ok(())
     }
 }
