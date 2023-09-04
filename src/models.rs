@@ -51,17 +51,11 @@ impl Story {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub struct DBState {
     // This struct represents the entire db state which includes the last_item_id, epics, and stories
     // TODO: add fields (make sure the fields are public)
     pub last_item_id : u32,
     pub epics: HashMap<u32,Epic>,
     pub stories: HashMap<u32, Story>,
-}
-
-impl PartialEq for DBState {
-    fn eq(&self, other: &Self) -> bool {
-        self.last_item_id == other.last_item_id && self.epics == other.epics && self.stories == other.stories
-    }
 }
