@@ -1,6 +1,6 @@
 use std::{fs, sync::Mutex, borrow::BorrowMut, cell::{RefCell, Ref}};
 
-use anyhow::{Result, anyhow};
+use anyhow::{Result, anyhow, Ok};
 
 use crate::models::{DBState, Epic, Story, Status};
 
@@ -38,7 +38,7 @@ impl JiraDatabase {
             self.database.write_db(&db_state)?;
             Ok(db_state.last_item_id)
         } else {
-            Err(anyhow!("The epic id ({})doesn't exist.", epic_id))
+            Err(anyhow!("The epic id ({})doesn't exist in creating story.", epic_id))
         }
     }
     
@@ -52,29 +52,42 @@ impl JiraDatabase {
             self.database.write_db(&db_state)?;
             Ok(())
         } else {
-            Err(anyhow!("The epic id ({}) doesn't exist", epic_id))
+            Err(anyhow!("The epic id ({}) doesn't exist for delete", epic_id))
         }
     }
     
     pub fn delete_story(&self,epic_id: u32, story_id: u32) -> Result<()> {
         let mut db_state = self.database.read_db()?;
-        if let Some(story) = db_state.stories.get(&story_id){
-            if let Some(epic) = db_state.epics.get_mut(&epic_id) {
-                epic.stories.retain(|story|story != &story_id);
-            }
+        if let (Some(story), Some(epic)) = (db_state.stories.get(&story_id),db_state.epics.get_mut(&epic_id)){
+            epic.stories.retain(|story|story != &story_id);
             db_state.stories.remove(&story_id);
+            self.database.write_db(&db_state)?;
             Ok(())
         }else {
-            Err(anyhow!("The story id ({}) doesn't exist.", story_id))
+            Err(anyhow!("The story id ({}) doesn't exist for delete.", story_id))
         }
     }
     
     pub fn update_epic_status(&self, epic_id: u32, status: Status) -> Result<()> {
-        todo!()
+        let mut db_state = self.database.read_db()?;
+        if let Some(epic) = db_state.epics.get_mut(&epic_id) {
+            epic.status = status;
+            self.database.write_db(&db_state)?;
+            Ok(())
+        } else {
+            Err(anyhow!("The epic id ({}) doesn't exist update.", epic_id))
+        }
     }
     
     pub fn update_story_status(&self, story_id: u32, status: Status) -> Result<()> {
-        todo!()
+        let mut db_state = self.database.read_db()?;
+        if let Some(story) = db_state.stories.get_mut(&story_id) {
+            story.status = status;
+            self.database.write_db(&db_state);
+            Ok(())
+        } else {
+            Err(anyhow!("The story id ({}) doesn't exist for update.", story_id))
+        }
     }
 }
 
