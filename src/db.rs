@@ -25,6 +25,7 @@ impl JiraDatabase {
         let mut db_state = self.database.read_db()?;
         db_state.last_item_id +=1;
         db_state.epics.insert(db_state.last_item_id, epic);
+        
         self.database.write_db(&db_state)?;
         Ok(db_state.last_item_id)
     }
@@ -32,28 +33,22 @@ impl JiraDatabase {
     pub fn create_story(&self, story: Story, epic_id: u32) -> Result<u32> {
         let mut db_state = self.database.read_db()?;
         db_state.last_item_id +=1;
-        if let Some(epic)= db_state.epics.get_mut(&epic_id) {
-            epic.stories.push(db_state.last_item_id);
-            db_state.stories.insert(db_state.last_item_id, story);
-            self.database.write_db(&db_state)?;
-            Ok(db_state.last_item_id)
-        } else {
-            Err(anyhow!("The epic id ({})doesn't exist in creating story.", epic_id))
-        }
+        db_state.stories.insert(db_state.last_item_id, story);
+        db_state.epics.get_mut(&epic_id).ok_or_else(|| anyhow!("The epic id ({epic_id})doesn't exist in creating story."))?.stories.push(db_state.last_item_id);
+        
+        self.database.write_db(&db_state)?;
+        Ok(db_state.last_item_id)
     }
     
     pub fn delete_epic(&self, epic_id: u32) -> Result<()> {
         let mut db_state = self.database.read_db()?;
-        if let Some(epic) = db_state.epics.get(&epic_id) {
-            for story_id in db_state.epics.get(&epic_id).unwrap().stories.iter(){
-                db_state.stories.remove(story_id);
-            }
-            db_state.epics.remove(&epic_id);
-            self.database.write_db(&db_state)?;
-            Ok(())
-        } else {
-            Err(anyhow!("The epic id ({}) doesn't exist for delete", epic_id))
+        for story_id in db_state.epics.get(&epic_id).ok_or_else(|| anyhow!("The epic id ({epic_id}) doesn't exist for delete"))?.stories.iter() {
+            db_state.stories.remove(story_id);
         }
+        db_state.epics.remove(&epic_id);
+            
+        self.database.write_db(&db_state)?;
+        Ok(())
     }
     
     pub fn delete_story(&self,epic_id: u32, story_id: u32) -> Result<()> {
@@ -61,33 +56,26 @@ impl JiraDatabase {
         if let (Some(story), Some(epic)) = (db_state.stories.get(&story_id),db_state.epics.get_mut(&epic_id)){
             epic.stories.retain(|story|story != &story_id);
             db_state.stories.remove(&story_id);
+            
             self.database.write_db(&db_state)?;
             Ok(())
         }else {
-            Err(anyhow!("The story id ({}) doesn't exist for delete.", story_id))
+            Err(anyhow!("The story id ({story_id}) doesn't exist for delete."))
         }
     }
     
     pub fn update_epic_status(&self, epic_id: u32, status: Status) -> Result<()> {
         let mut db_state = self.database.read_db()?;
-        if let Some(epic) = db_state.epics.get_mut(&epic_id) {
-            epic.status = status;
-            self.database.write_db(&db_state)?;
-            Ok(())
-        } else {
-            Err(anyhow!("The epic id ({}) doesn't exist update.", epic_id))
-        }
+        db_state.epics.get_mut(&epic_id).ok_or_else(||anyhow!("The epic id ({epic_id}) doesn't exist for update."))?.status = status;
+        self.database.write_db(&db_state)?;
+        Ok(())
     }
     
     pub fn update_story_status(&self, story_id: u32, status: Status) -> Result<()> {
         let mut db_state = self.database.read_db()?;
-        if let Some(story) = db_state.stories.get_mut(&story_id) {
-            story.status = status;
-            self.database.write_db(&db_state);
-            Ok(())
-        } else {
-            Err(anyhow!("The story id ({}) doesn't exist for update.", story_id))
-        }
+        db_state.stories.get_mut(&story_id).ok_or_else(|| anyhow!("The story id ({story_id}) doesn't exist for update."))?.status = status;       
+        self.database.write_db(&db_state);
+        Ok(())
     }
 }
 
