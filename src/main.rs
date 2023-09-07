@@ -1,6 +1,8 @@
 mod models;
 mod db;
+mod ui;
 
 fn main() {
-    println!("Hello, world!");
+    let s = ui::page_helpers::get_column_string("testme",6);
+    println!("Hello, world!{}",s);
 }
