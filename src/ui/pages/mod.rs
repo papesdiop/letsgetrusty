@@ -1,4 +1,3 @@
-use std::borrow::BorrowMut;
 use std::rc::Rc;
 
 use itertools::Itertools;
@@ -41,16 +40,19 @@ impl Page for HomePage {
 
     fn handle_input(&self, input: &str) -> Result<Option<Action>> {
         // match against the user input and return the corresponding action. If the user input was invalid return None.
+        let epic_id = input.trim().parse();
+        if epic_id.is_ok() {
+            let epic_id = epic_id.unwrap();
+            if let Some(_) = self.db.read_db()?.epics.get(&epic_id) {
+                return Ok(Some(Action::NavigateToEpicDetail { epic_id : epic_id }));
+            }else {
+                return Ok(None);
+            }
+        }
         match input {
             "c"|"C" => Ok(Some(Action::CreateEpic)),
             "q"|"Q" => Ok(Some(Action::Exit)),
-            _ => {
-                
-                    //Ok(Some(Action::NavigateToEpicDetail { epic_id: _ as u32 }))
-               
-                    Ok(None)
-                
-            },
+            _ => Ok(None),
         }
     }
 }
@@ -67,6 +69,9 @@ impl Page for EpicDetail {
 
         println!("------------------------------ EPIC ------------------------------");
         println!("  id  |     name     |         description         |    status    ");
+        print!("{}", get_column_string(&self.epic_id.to_string(), 6));
+        print!("{}", get_column_string(&epic.description, 31));
+        println!("{}", get_column_string(&format!("{:?}", epic.status), 14));
 
         // TODO: print out epic details using get_column_string()
   
@@ -76,6 +81,11 @@ impl Page for EpicDetail {
         println!("     id     |               name               |      status      ");
 
         let stories = &db_state.stories;
+        for (id, story) in stories.iter() {
+            print!("{}", get_column_string(&id.to_string(), 12));
+            print!("{}", get_column_string(&story.name, 36));
+            println!("{}", get_column_string(&format!("{:?}", story.status), 18));
+        }
 
         // TODO: print out stories using get_column_string(). also make sure the stories are sorted by id
 
@@ -88,7 +98,23 @@ impl Page for EpicDetail {
     }
 
     fn handle_input(&self, input: &str) -> Result<Option<Action>> {
-        todo!() // match against the user input and return the corresponding action. If the user input was invalid return None.
+        // match against the user input and return the corresponding action. If the user input was invalid return None.
+        let story_id= input.trim().parse();
+        if story_id.is_ok() {
+            let story_id = story_id.unwrap();
+            if let Some(_) = self.db.read_db()?.stories.get(&story_id){
+                return Ok(Some(Action::NavigateToStoryDetail { epic_id: self.epic_id, story_id} ));
+            } else {
+                return Ok(None);
+            }
+        }
+        match input {
+            "p"|"P" => Ok(Some(Action::NavigateToPreviousPage)),
+            "u"|"U" => Ok(Some(Action::UpdateEpicStatus { epic_id: self.epic_id })),
+            "d"|"D" => Ok(Some(Action::DeleteEpic { epic_id: self.epic_id })),
+            "c"|"C" => Ok(Some(Action::CreateStory { epic_id: self.epic_id })),
+            _ => Ok(None),
+        }
     }
 }
 
@@ -107,6 +133,10 @@ impl Page for StoryDetail {
         println!("  id  |     name     |         description         |    status    ");
         
         // TODO: print out story details using get_column_string()
+
+        print!("{}", get_column_string(&self.story_id.to_string(), 6));
+        print!("{}", get_column_string(&story.description, 31));
+        println!("{}", get_column_string(&format!("{:?}", &story.status), 14));
         
         println!();
         println!();
@@ -117,7 +147,13 @@ impl Page for StoryDetail {
     }
 
     fn handle_input(&self, input: &str) -> Result<Option<Action>> {
-        todo!() // match against the user input and return the corresponding action. If the user input was invalid return None.
+        // match against the user input and return the corresponding action. If the user input was invalid return None.
+        match input {
+            "p"|"P" => Ok(Some(Action::NavigateToPreviousPage)),
+            "u"|"U" => Ok(Some(Action::UpdateStoryStatus { story_id: self.story_id })),
+            "d"|"D" => Ok(Some(Action::DeleteStory { epic_id: self.epic_id, story_id: self.story_id })),
+            _ => Ok(None),
+        }
     }
 }
 

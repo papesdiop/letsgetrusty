@@ -74,7 +74,7 @@ impl JiraDatabase {
     pub fn update_story_status(&self, story_id: u32, status: Status) -> Result<()> {
         let mut db_state = self.read_db()?;
         db_state.stories.get_mut(&story_id).ok_or_else(|| anyhow!("The story id ({story_id}) doesn't exist for update."))?.status = status;       
-        self.database.write_db(&db_state);
+        let _ = self.database.write_db(&db_state);
         Ok(())
     }
 }
