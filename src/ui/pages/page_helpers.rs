@@ -1,15 +1,23 @@
 use ellipse::Ellipse;
 
 pub fn get_column_string(text: &str, width: usize) -> String {
-    if width <= 3 {
-        ".".repeat(width)
-    } else if text.chars().count() > width{
-        (&text[0..width]).truncate_ellipse(width - 3).to_string()
-    } else {
-        let mut text= text.to_owned();
-        text.push_str(&" ".repeat(width - text.chars().count()));
-        text
-    } 
+    let len = text.chars().count();
+
+    match len.cmp(&width) {
+        std::cmp::Ordering::Less => {
+            let mut text= text.to_owned();
+            text.push_str(&" ".repeat(width - len));
+            return text;
+        },
+        std::cmp::Ordering::Equal => text.to_owned(),
+        std::cmp::Ordering::Greater => {
+            if width <= 3 {
+                return ".".repeat(width);
+            } else {
+                return (&text[0..width]).truncate_ellipse(width - 3).to_string();
+            }
+        },
+    }
 }
 
 #[cfg(test)]

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -24,6 +24,17 @@ pub enum Status {
     Closed,
 }
 
+impl Display for Status {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Open => write!(f, "Open"),
+            Self::InProgress => write!(f, "InProgress"),
+            Self::Resolved => write!(f, "Resolved"),
+            Self::Closed => write!(f, "Closed"),
+        }
+    }
+}
+
 #[derive(Deserialize, Serialize, Debug, PartialEq, Eq, Clone, PartialOrd, Ord)]
 pub struct Epic {
     // TODO: add fields (make sure the fields are public)
@@ -45,7 +56,7 @@ impl Epic {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, PartialEq, Eq, Clone)]
+#[derive(Deserialize, Serialize, Debug, PartialEq, Eq, Clone, PartialOrd, Ord)]
 pub struct Story {
     // TODO: add fields (make sure the fields are public)
     pub name: String,
