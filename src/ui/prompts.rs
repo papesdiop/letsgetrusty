@@ -31,12 +31,11 @@ fn create_epic_prompt() -> Epic {
     println!("Epic description : ");
     let description = get_user_input();
 
-    Epic { name , description: description, status:Status::Open, stories: vec![] }
+    Epic::new(name, description)
 
 }
 
 fn create_story_prompt() -> Story {
-    
     println!("-------------------------------");
     println!("Story name : ");
     let name = get_user_input();
@@ -44,7 +43,7 @@ fn create_story_prompt() -> Story {
     println!("Story description : ");
     let description = get_user_input();
 
-    Story { name, description, status: Status::Open }
+    Story::new(name, description)
 
 }
 
@@ -52,7 +51,7 @@ fn delete_epic_prompt() -> bool {
     println!("----------------------------");
     print!("Are you sure you want to delete this epic? All stories in this epic will also be deleted [Y/n]");
     let input = get_user_input();
-    if &input == "Y" {
+    if input.trim().eq_ignore_ascii_case("Y") {
         return true;
     }
     return false;
@@ -62,7 +61,7 @@ fn delete_story_prompt() -> bool {
     println!("---------------------------");
     print!("Are you sure you want to delete this story? [Y/n]");
     let input = get_user_input();
-    if &input == "Y" {
+    if input.trim().eq_ignore_ascii_case("Y") {
         return true;
     }
     return false;
