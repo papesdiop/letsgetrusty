@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result, Context, Ok};
 use std::rc::Rc;
 
-use crate::{ui::{Page, HomePage, EpicDetail, StoryDetail, Prompts}, db::JiraDatabase, models::{Action, Epic}};
+use crate::{ui::{Page, HomePage, EpicDetail, StoryDetail, Prompts}, db::JiraDatabase, models::Action};
 
 pub struct Navigator {
     pages: Vec<Box<dyn Page>>,
@@ -20,7 +20,7 @@ impl Navigator {
 
     pub fn get_current_page(&self) -> Option<&Box<dyn Page>> {
         // this should always return the last element in the pages vector
-        self.pages.iter().rev().next()
+        self.pages.last()
     }
 
     pub fn handle_action(&mut self, action: Action) -> Result<()> {
@@ -35,45 +35,47 @@ impl Navigator {
             }
             Action::NavigateToPreviousPage => {
                 // remove the last page from the pages vector
-                self.pages.pop();
+                if !self.pages.is_empty() { 
+                    self.pages.pop(); 
+                }
             }
             Action::CreateEpic => {
                 // prompt the user to create a new epic and persist it in the database
-                let epic = self.prompts.create_epic.as_ref()();
-                self.db.create_epic(epic)?;
+                let epic = (self.prompts.create_epic)();
+                self.db.create_epic(epic).with_context(|| anyhow!("failed to create epic!"))?;
             }
             Action::UpdateEpicStatus { epic_id } => {
                 // prompt the user to update status and persist it in the database
                 let status = self.prompts.update_status.as_ref()().with_context(|| anyhow!("Invalid status!")).unwrap();
-                self.db.update_epic_status(epic_id, status)?;
+                self.db.update_epic_status(epic_id, status).with_context(|| anyhow!("failed to update epic!"))?;
             }
             Action::DeleteEpic { epic_id } => {
                 // prompt the user to delete the epic and persist it in the database
                 let confirm = self.prompts.delete_epic.as_ref()();
                 if confirm {
-                    self.db.delete_epic(epic_id)?;
+                    self.db.delete_epic(epic_id).with_context(|| anyhow!("failed to delete epic!"))?;
                 }
             }
             Action::CreateStory { epic_id } => {
                 // prompt the user to create a new story and persist it in the database
                 let story = self.prompts.create_story.as_ref()();
-                self.db.create_story(story, epic_id)?;
+                self.db.create_story(story, epic_id).with_context(|| anyhow!("failed to create story!"))?;
             }
             Action::UpdateStoryStatus { story_id } => {
                 // prompt the user to update status and persist it in the database
                 let status = self.prompts.update_status.as_ref()().with_context(||anyhow!("Invalid status!")).unwrap();
-                self.db.update_story_status(story_id, status)?;
+                self.db.update_story_status(story_id, status).with_context(|| anyhow!("failed to update story!"))?;
             }
             Action::DeleteStory { epic_id, story_id } => {
                 // prompt the user to delete the story and persist it in the database
                 let confirm = self.prompts.delete_story.as_ref()();
                 if confirm {
-                    self.db.delete_story(epic_id, story_id)?;
+                    self.db.delete_story(epic_id, story_id).with_context(|| anyhow!("failed to delete story!"))?;
                 }
             }
             Action::Exit => {
                 // remove all pages from the pages vector
-                self.pages = vec![];
+                self.pages.clear();
             },
         }
 
