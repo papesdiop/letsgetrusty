@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::rc::Rc;
 
 use itertools::Itertools;
@@ -14,6 +15,7 @@ use page_helpers::*;
 pub trait Page {
     fn draw_page(&self) -> Result<()>;
     fn handle_input(&self, input: &str) -> Result<Option<Action>>;
+    fn as_any(&self) -> &dyn Any;
 }
 
 pub struct HomePage {
@@ -56,6 +58,11 @@ impl Page for HomePage {
             },
         }
     }
+    
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
 }
 
 pub struct EpicDetail {
@@ -119,6 +126,11 @@ impl Page for EpicDetail {
             },
         }
     }
+    
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
 }
 
 pub struct StoryDetail {
@@ -161,6 +173,11 @@ impl Page for StoryDetail {
             _ => Ok(None),
         }
     }
+    
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
 }
 
 #[cfg(test)]
