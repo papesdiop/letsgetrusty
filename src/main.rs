@@ -20,7 +20,7 @@ fn main() {
     let mut navigator = Navigator::new(Rc::new(db));
 
     loop {
-        clearscreen::clear().unwrap();
+        clearscreen::clear().expect("failed to clear screen");
         let page = navigator.get_current_page();
         if let Some(page) = page {
             if let Err(error) = page.draw_page() {
@@ -38,6 +38,8 @@ fn main() {
                     let _ = navigator.handle_action(action);
                 }
             }
+        } else {
+            break;
         }
         // TODO: implement the following functionality:
         // 1. get current page from navigator. If there is no current page exit the loop.

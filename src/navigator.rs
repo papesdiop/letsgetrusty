@@ -46,7 +46,7 @@ impl Navigator {
             }
             Action::UpdateEpicStatus { epic_id } => {
                 // prompt the user to update status and persist it in the database
-                let status = self.prompts.update_status.as_ref()().with_context(|| anyhow!("Invalid status!")).unwrap();
+                let status = self.prompts.update_status.as_ref()().with_context(|| anyhow!("Invalid status!"))?;
                 self.db.update_epic_status(epic_id, status).with_context(|| anyhow!("failed to update epic!"))?;
             }
             Action::DeleteEpic { epic_id } => {
@@ -54,6 +54,7 @@ impl Navigator {
                 let confirm = self.prompts.delete_epic.as_ref()();
                 if confirm {
                     self.db.delete_epic(epic_id).with_context(|| anyhow!("failed to delete epic!"))?;
+                    self.pages.pop();
                 }
             }
             Action::CreateStory { epic_id } => {
@@ -71,6 +72,7 @@ impl Navigator {
                 let confirm = self.prompts.delete_story.as_ref()();
                 if confirm {
                     self.db.delete_story(epic_id, story_id).with_context(|| anyhow!("failed to delete story!"))?;
+                    self.pages.pop();
                 }
             }
             Action::Exit => {

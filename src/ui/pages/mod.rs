@@ -46,7 +46,7 @@ impl Page for HomePage {
     fn handle_input(&self, input: &str) -> Result<Option<Action>> {
         // match against the user input and return the corresponding action. If the user input was invalid return None.
         
-        match input {
+        match input.trim() {
             "c"|"C" => Ok(Some(Action::CreateEpic)),
             "q"|"Q" => Ok(Some(Action::Exit)),
             input => {
@@ -112,7 +112,7 @@ impl Page for EpicDetail {
     fn handle_input(&self, input: &str) -> Result<Option<Action>> {
         // match against the user input and return the corresponding action. If the user input was invalid return None.
         
-        match input {
+        match input.trim() {
             "p"|"P" => Ok(Some(Action::NavigateToPreviousPage)),
             "u"|"U" => Ok(Some(Action::UpdateEpicStatus { epic_id: self.epic_id })),
             "d"|"D" => Ok(Some(Action::DeleteEpic { epic_id: self.epic_id })),
@@ -151,7 +151,7 @@ impl Page for StoryDetail {
         // TODO: print out story details using get_column_string()
 
         let id = get_column_string(&self.story_id.to_string(), 5);
-        let name = get_column_string(&story.description, 12);
+        let name = get_column_string(&story.name, 12);
         let description = get_column_string(&story.description, 27);
         let status = get_column_string(&format!("{:?}", &story.status), 13);
 
@@ -167,7 +167,7 @@ impl Page for StoryDetail {
 
     fn handle_input(&self, input: &str) -> Result<Option<Action>> {
         // match against the user input and return the corresponding action. If the user input was invalid return None.
-        match input {
+        match input.trim() {
             "p"|"P" => Ok(Some(Action::NavigateToPreviousPage)),
             "u"|"U" => Ok(Some(Action::UpdateStoryStatus { story_id: self.story_id })),
             "d"|"D" => Ok(Some(Action::DeleteStory { epic_id: self.epic_id, story_id: self.story_id })),
