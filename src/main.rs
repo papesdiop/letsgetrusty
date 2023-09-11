@@ -28,14 +28,19 @@ fn main() {
                 wait_for_key_press();
                 break;
             }
+
             let input = get_user_input();
-            let action = page.handle_input(&input);
+
+            let action = page.handle_input(input.trim());
             if let Ok(action) = action {
                 if let Some(action) = action{
                     if action == Action::Exit {
                         break;
                     }
-                    let _ = navigator.handle_action(action);
+                    if let Err(error) = navigator.handle_action(action) {
+                        println!("Error handling processing user input: {}\nPress any key to continue...", error);
+                        wait_for_key_press();
+                    }
                 }
             }
         } else {
