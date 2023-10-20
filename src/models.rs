@@ -25,7 +25,7 @@ pub struct QuestionDetail {
 //       add a public `question_uuid` field of type String
 
 #[derive(Serialize, Deserialize)]
-struct QuestionId {
+pub struct QuestionId {
     pub question_uuid: String,
 }
 
@@ -37,7 +37,7 @@ struct QuestionId {
 //       add a public `content` field of type String
 
 #[derive(Serialize, Deserialize)]
-struct Answer {
+pub struct Answer {
     pub question_uuid:String,
     pub content: String,
 }
@@ -49,7 +49,7 @@ struct Answer {
 //       add a public `created_at` field of type String
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-struct AnswerDetail {
+pub struct AnswerDetail {
     pub answer_uuid: String,
     pub question_uuid: String,
     pub content: String,
@@ -61,6 +61,6 @@ struct AnswerDetail {
 //       add a public `answer_uuid` field of type String
 
 #[derive(Serialize, Deserialize)]
-struct AnswerId {
+pub struct AnswerId {
     pub answer_uuid: String,
 }
