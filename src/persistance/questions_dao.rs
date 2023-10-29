@@ -16,7 +16,7 @@ pub struct QuestionsDaoImpl {
 
 impl QuestionsDaoImpl {
     pub fn new(db: PgPool) -> Self {
-        todo!() // return an instance of QuestionsDaoImpl
+        QuestionsDaoImpl { db } // return an instance of QuestionsDaoImpl
     }
 }
 
@@ -32,14 +32,21 @@ impl QuestionsDao for QuestionsDaoImpl {
         // ```
         // If executing the query results in an error, map that error to
         // the`DBError::Other` error and early return from this function.
-        let record = todo!();
+        let record = sqlx::query!(r#"
+        INSERT INTO questions ( title, description )
+        VALUES ( $1, $2 )
+        RETURNING *"#, question.title, question.description)
+        .fetch_one(&self.db)
+        .await
+        .map_err(|err| DBError::Other(Box::new(err)))
+        ?;
 
         // Populate the QuestionDetail fields using `record`.
         Ok(QuestionDetail {
-            question_uuid: todo!(),
-            title: todo!(),
-            description: todo!(),
-            created_at: todo!(),
+            question_uuid: record.question_uuid.to_string(),
+            title: record.title,
+            description: record.description,
+            created_at: record.created_at.to_string(),
         })
     }
 
@@ -49,7 +56,8 @@ impl QuestionsDao for QuestionsDaoImpl {
         //
         // If `parse_str` returns an error, map the error to a `DBError::InvalidUUID` error
         // and early return from this function.
-        let uuid = todo!();
+        let uuid = sqlx::types::Uuid::parse_str(&question_uuid)
+            .map_err(|err| DBError::InvalidUUID(err.to_string()))?;
 
         // TODO: Make a database query to delete a question given the question uuid.
         // Here is the SQL query:
@@ -58,7 +66,11 @@ impl QuestionsDao for QuestionsDaoImpl {
         // ```
         // If executing the query results in an error, map that error
         // to a `DBError::Other` error and early return from this function.
-
+        sqlx::query!("DELETE FROM questions WHERE question_uuid = $1", uuid)
+            .execute(&self.db)
+            .await
+            .map_err(|err| DBError::Other(Box::new(err)))
+            ?;
         Ok(())
     }
 
@@ -70,11 +82,24 @@ impl QuestionsDao for QuestionsDaoImpl {
         // ```
         // If executing the query results in an error, map that error
         // to a `DBError::Other` error and early return from this function.
-        let records = todo!();
+        let records = sqlx::query!("SELECT * FROM questions")
+            .fetch_all(&self.db)
+            .await
+            .map_err(|err| DBError::Other(Box::new(err)))
+            ?;
 
         // Iterate over `records` and map each record to a `QuestionDetail` type
-        let questions = todo!();
-
+        let mut questions = Vec::new();
+        for record in records {
+            questions.push(
+                QuestionDetail{
+                    question_uuid : record.question_uuid.to_string(),
+                    title : record.title,
+                    description : record.description,
+                    created_at : record. created_at.to_string()
+                }
+            )
+        }
         Ok(questions)
     }
 }
