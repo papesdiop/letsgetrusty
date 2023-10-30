@@ -52,4 +52,7 @@ async fn rocket() -> _ {
             ],
         )
         .attach(CORS)
+        // The manage method allows us to add state to the state managed by this instance of Rocket. Then we can use this state in the handlers.
+        .manage(todo!()) // pass in `questions_dao` as a boxed trait object. hint: you must cast `questions_dao` to a trait object.
+        .manage(todo!()) // pass in `answers_dao` as a boxed trait object. hint: you must cast `answers_dao` to a trait object.
 }
