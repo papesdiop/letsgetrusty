@@ -20,14 +20,11 @@ pub async fn create_question(
     // We are using a trait object here so that inner handlers do not depend on concrete DAO implementations
     questions_dao: &Box<dyn QuestionsDao + Sync + Send>,
 ) -> Result<QuestionDetail, HandlerError> {
-    let question = questions_dao.create_question(question)
-    .await; // create question using `questions_dao`
+    let question = questions_dao.create_question(question).await; 
 
     match question {
-        Ok(question) => Ok(question), // return question
+        Ok(question) => Ok(question), 
         Err(err) => {
-            // TODO: log err using error! macro
-            // return a default internal error using the HandlerError type 
             error!("{:?}" , err);
             Err(HandlerError::default_internal_error())
         }
@@ -42,10 +39,8 @@ pub async fn read_questions(
         .await; // get questions using `questions_dao`
 
     match questions {
-        Ok(questions) => Ok(questions), // return questions
+        Ok(questions) => Ok(questions), 
         Err(err) => {
-            // TODO: log err using error! macro
-            // return a default internal error using the HandlerError type 
             error!("{:?}", err);
             Err(HandlerError::default_internal_error())
         }
@@ -61,7 +56,6 @@ pub async fn delete_question(
         .await;
 
     if result.is_err() {
-         // return a default internal error using the HandlerError type 
         return Err(HandlerError::default_internal_error());
     }
 
@@ -74,16 +68,15 @@ pub async fn create_answer(
 ) -> Result<AnswerDetail, HandlerError> {
     let answer = answers_dao
         .create_answer(answer)
-        .await; // create answer using `answers_dao`
+        .await; 
 
     match answer {
-        Ok(answer) => Ok(answer), // return answer
+        Ok(answer) => Ok(answer), 
         Err(err) => {
-            // TODO: log err using error! macro
             error!("Error encountered : {:?}", err);
             match err {
-                DBError::InvalidUUID(s) => Err(HandlerError::BadRequest(s)), // return a `HandlerError::BadRequest` error passing in s as the string
-                _ => Err(HandlerError::default_internal_error()), // return a default internal error using the HandlerError type 
+                DBError::InvalidUUID(s) => Err(HandlerError::BadRequest(s)), 
+                _ => Err(HandlerError::default_internal_error()), 
             }
         }
     }
@@ -95,14 +88,13 @@ pub async fn read_answers(
 ) -> Result<Vec<AnswerDetail>, HandlerError> {
     let answers = answers_dao
         .get_answers(question_uuid.question_uuid)
-        .await; // get answers using `answers_dao`
+        .await; 
 
     match answers {
-        Ok(answers) => Ok(answers), // return answers
+        Ok(answers) => Ok(answers), 
         Err(e) => {
-            // TODO: log err using error! macro
             error!("error encountered : {:?}", e);
-            Err(HandlerError::default_internal_error()) // return a default internal error using the HandlerError type 
+            Err(HandlerError::default_internal_error())  
         }
     }
 }
@@ -113,10 +105,10 @@ pub async fn delete_answer(
 ) -> Result<(), HandlerError> {
     let result = answers_dao
     .delete_answer(answer_uuid.answer_uuid)
-    .await; // delete answer using `answers_dao`
+    .await; 
 
     if result.is_err() {
-        return Err(HandlerError::default_internal_error()); // return a default internal error using the HandlerError type 
+        return Err(HandlerError::default_internal_error()); 
     }
 
     Ok(())
