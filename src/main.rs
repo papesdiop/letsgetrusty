@@ -8,6 +8,7 @@ extern crate pretty_env_logger;
 
 use dotenvy::dotenv;
 
+use persistance::{questions_dao::{ QuestionsDaoImpl, QuestionsDao}, answers_dao::{AnswersDaoImpl, AnswersDao}};
 use sqlx::postgres::PgPoolOptions;
 
 mod cors;
@@ -28,16 +29,9 @@ async fn rocket() -> _ {
         .connect(&std::env::var("DATABASE_URL").expect("DATABASE_URL must be set."))
         .await
         .expect("Failed to create Postgres connection pool!");
-    
-    // TODO: Delete this query
-    let recs = sqlx::query!("SELECT * FROM questions")
-            .fetch_all(&pool)
-            .await
-            .unwrap();
 
-    // TODO: Delete these log statements
-    info!("********* Question Records *********");
-    info!("{:?}", recs);
+    let questions_dao: Box<dyn QuestionsDao + Sync + Send> =  Box::new(QuestionsDaoImpl::new(pool.clone())); // create a new instance of QuestionsDaoImpl passing in `pool` (use the clone method)
+    let answers_dao: Box<dyn AnswersDao + Sync + Send> = Box::new(AnswersDaoImpl::new(pool));// create a new instance of AnswersDaoImpl passing in `pool`
 
     rocket::build()
         .mount(
@@ -53,6 +47,6 @@ async fn rocket() -> _ {
         )
         .attach(CORS)
         // The manage method allows us to add state to the state managed by this instance of Rocket. Then we can use this state in the handlers.
-        .manage(todo!()) // pass in `questions_dao` as a boxed trait object. hint: you must cast `questions_dao` to a trait object.
-        .manage(todo!()) // pass in `answers_dao` as a boxed trait object. hint: you must cast `answers_dao` to a trait object.
+        .manage(questions_dao) // pass in `questions_dao` as a boxed trait object. hint: you must cast `questions_dao` to a trait object.
+        .manage(answers_dao) // pass in `answers_dao` as a boxed trait object. hint: you must cast `answers_dao` to a trait object.
 }
