@@ -7,6 +7,25 @@ use crate::persistance::questions_dao::QuestionsDao;
 
 mod handlers_inner;
 
+use handlers_inner::*;
+
+#[derive(Responder)]
+pub enum APIError {
+    #[response(status = 400)]
+    BadRequest(String),
+    #[response(status = 500)]
+    InternalError(String),
+}
+
+impl From<HandlerError> for APIError {
+    fn from(value: HandlerError) -> Self {
+        match value {
+            HandlerError::BadRequest(s) => Self::BadRequest(s),
+            HandlerError::InternalError(s) => Self::InternalError(s),
+        }
+    }
+}
+
 // ---- CRUD for Questions ----
 
 #[post("/question", data = "<question>")]
@@ -14,6 +33,10 @@ pub async fn create_question(
     question: Json<Question>,
     questions_dao: &State<Box<dyn QuestionsDao + Sync + Send>>,
 ) -> Json<QuestionDetail> {
+     // TODO: update return type to be of type `Result`. Use `APIError` for the error case.
+    // TODO: Replace the fake data below with a call to `handlers_inner::create_question`.
+    // Return the result wrapped in JSON in the success case and an `APIError` in the error case.
+    // NOTE: You can easily turn `HandlerError` into an `APIError` because of the From trait implementation above.
     Json (
         handlers_inner::create_question(question.into_inner(), questions_dao).await.unwrap()
     )
