@@ -7,5 +7,6 @@
     "workbench.tree.renderIndentGuides": "always",
     "workbench.colorCustomizations": {
         "tree.indentGuidesStroke": "#05ef3c"
-    }
+    },
+    "rust-analyzer.checkOnSave": true
 }

@@ -1,3 +1,4 @@
+use core::panic;
 use std::sync::Mutex;
 
 use crate::{sessions::Sessions, users::Users};
@@ -45,15 +46,31 @@ impl Auth for AuthService {
 
         let req = request.into_inner();
 
-        let result: Option<String> = todo!(); // Get user's uuid from `users_service`. Panic if the lock is poisoned.
+        let result: Option<String> = match self.users_service.lock() {
+            Ok(user) => user.get_user_uuid(req.username, req.password),
+            Err(poisonned) => panic!("{:?}", poisonned),
+        }; // Get user's uuid from `users_service`. Panic if the lock is poisoned.
 
         // Match on `result`. If `result` is `None` return a SignInResponse with a the `status_code` set to `Failure`
         // and `user_uuid`/`session_token` set to empty strings.
-        let user_uuid: String = todo!();
+        if result.is_none() {
+            return Ok(Response::new(SignInResponse {
+                status_code: StatusCode::Failure.into(),
+                user_uuid: "".to_owned(),
+                session_token: "".to_owned(),
+            }));
+        }
 
-        let session_token: String = todo!(); // Create new session using `sessions_service`. Panic if the lock is poisoned.
+        let session_token: String = match self.sessions_service.lock() {
+            Ok(mut session) => session.create_session(result.clone().unwrap().as_str()),
+            Err(poisonned) => panic!("{:?}", poisonned),
+        }; // Create new session using `sessions_service`. Panic if the lock is poisoned.
 
-        let reply: SignInResponse = todo!(); // Create a `SignInResponse` with `status_code` set to `Success`
+        let reply: SignInResponse = SignInResponse {
+            status_code: StatusCode::Success.into(),
+            user_uuid: result.unwrap(),
+            session_token,
+        }; // Create a `SignInResponse` with `status_code` set to `Success`
 
         Ok(Response::new(reply))
     }
@@ -66,17 +83,24 @@ impl Auth for AuthService {
 
         let req = request.into_inner();
 
-        let result: Result<(), String> = todo!(); // Create a new user through `users_service`. Panic if the lock is poisoned.
+        let result: Result<(), String> = match self.users_service.lock() {
+            Ok(mut user_svc) => user_svc.create_user(req.username, req.password),
+            Err(poisonned) => panic!("{}", poisonned),
+        }; // Create a new user through `users_service`. Panic if the lock is poisoned.
 
         // TODO: Return a `SignUpResponse` with the appropriate `status_code` based on `result`.
         match result {
             Ok(_) => {
-                todo!()
+                return Ok(Response::new(SignUpResponse {
+                    status_code: StatusCode::Success.into(),
+                }))
             }
             Err(_) => {
-                todo!()
+                return Ok(Response::new(SignUpResponse {
+                    status_code: StatusCode::Failure.into(),
+                }))
             }
-        }
+        };
     }
 
     async fn sign_out(
@@ -89,7 +113,15 @@ impl Auth for AuthService {
 
         // TODO: Delete session using `sessions_service`.
 
-        let reply: SignOutResponse = todo!(); // Create `SignOutResponse` with `status_code` set to `Success`
+        let reply: SignOutResponse = match self.sessions_service.lock() {
+            Ok(mut session_svc) => {
+                session_svc.delete_session(req.session_token.as_str());
+                SignOutResponse {
+                    status_code: StatusCode::Success.into(),
+                }
+            }
+            Err(poisonned) => panic!("{:}", poisonned),
+        }; // Create `SignOutResponse` with `status_code` set to `Success`
 
         Ok(Response::new(reply))
     }
@@ -97,7 +129,7 @@ impl Auth for AuthService {
 
 #[cfg(test)]
 mod tests {
-    use crate::{users::UsersImpl, sessions::SessionsImpl};
+    use crate::{sessions::SessionsImpl, users::UsersImpl};
 
     use super::*;
 
@@ -212,7 +244,7 @@ mod tests {
         let auth_service = AuthService::new(users_service, sessions_service);
 
         let request = tonic::Request::new(SignOutRequest {
-            session_token: "".to_owned()
+            session_token: "".to_owned(),
         });
 
         let result = auth_service.sign_out(request).await.unwrap();
