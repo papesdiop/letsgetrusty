@@ -27,8 +27,8 @@ impl QuestionsDao for QuestionsDaoImpl {
             r#"
             INSERT INTO questions ( title, description )
             VALUES ( $1, $2 )
-            RETURNING *"#, 
-            question.title, 
+            RETURNING *"#,
+            question.title,
             question.description
         )
         .fetch_one(&self.db)
@@ -45,14 +45,14 @@ impl QuestionsDao for QuestionsDaoImpl {
     }
 
     async fn delete_question(&self, question_uuid: String) -> Result<(), DBError> {
-        let uuid = sqlx::types::Uuid::parse_str(&question_uuid)
-            .map_err(|err| DBError::InvalidUUID(format!("Error in parsing UUID : {}", question_uuid)))?;
+        let uuid = sqlx::types::Uuid::parse_str(&question_uuid).map_err(|_| {
+            DBError::InvalidUUID(format!("Error in parsing UUID : {}", question_uuid))
+        })?;
 
         sqlx::query!("DELETE FROM questions WHERE question_uuid = $1", uuid)
             .execute(&self.db)
             .await
-            .map_err(|err| DBError::Other(Box::new(err)))
-            ?;
+            .map_err(|err| DBError::Other(Box::new(err)))?;
         Ok(())
     }
 
@@ -60,20 +60,19 @@ impl QuestionsDao for QuestionsDaoImpl {
         let records = sqlx::query!("SELECT * FROM questions")
             .fetch_all(&self.db)
             .await
-            .map_err(|err| DBError::Other(Box::new(err)))
-            ?;
+            .map_err(|err| DBError::Other(Box::new(err)))?;
 
         // Iterate over `records` and map each record to a `QuestionDetail` type
-        let questions = records.iter()
-            .map(|q| 
-                QuestionDetail{
-                    question_uuid : q.question_uuid.to_string(),
-                    title : q.title.clone(),
-                    description : q.description.clone(),
-                    created_at : q. created_at.to_string()
-                }
-            ).collect();
-        
+        let questions = records
+            .iter()
+            .map(|q| QuestionDetail {
+                question_uuid: q.question_uuid.to_string(),
+                title: q.title.clone(),
+                description: q.description.clone(),
+                created_at: q.created_at.to_string(),
+            })
+            .collect();
+
         Ok(questions)
     }
 }

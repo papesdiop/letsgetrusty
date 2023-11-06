@@ -16,9 +16,7 @@ pub struct AnswersDaoImpl {
 
 impl AnswersDaoImpl {
     pub fn new(db: PgPool) -> Self {
-        AnswersDaoImpl{
-            db
-        }
+        AnswersDaoImpl { db }
     }
 }
 
@@ -43,21 +41,19 @@ impl AnswersDao for AnswersDaoImpl {
         )
         .fetch_one(&self.db)
         .await
-        .map_err(|err: sqlx::Error| {
-            match err {
-               sqlx::Error::Database(e) => {
+        .map_err(|err: sqlx::Error| match err {
+            sqlx::Error::Database(e) => {
                 if let Some(code) = e.code() {
                     if code.eq(postgres_error_codes::FOREIGN_KEY_VIOLATION) {
-                       return DBError::InvalidUUID(format!(
+                        return DBError::InvalidUUID(format!(
                             "Invalid question UUID: {}",
                             answer.question_uuid
                         ));
                     }
                 }
                 return DBError::Other(Box::new(e));
-               },
-               e => DBError::Other(Box::new(e))
             }
+            e => DBError::Other(Box::new(e)),
         })?;
         // Populate the AnswerDetail fields using `record`.
         Ok(AnswerDetail {
@@ -69,37 +65,39 @@ impl AnswersDao for AnswersDaoImpl {
     }
 
     async fn delete_answer(&self, answer_uuid: String) -> Result<(), DBError> {
-        let uuid = sqlx::types::Uuid::parse_str(&answer_uuid)
-            .map_err(|_| DBError::InvalidUUID(format!("Error parsing the UUID : {}", answer_uuid)))?;
+        let uuid = sqlx::types::Uuid::parse_str(&answer_uuid).map_err(|_| {
+            DBError::InvalidUUID(format!("Error parsing the UUID : {}", answer_uuid))
+        })?;
 
         sqlx::query!("DELETE FROM answers WHERE answer_uuid = $1", uuid)
-        .execute(&self.db)
-        .await
-        .map_err(|err| DBError::Other(Box::new(err)))?;
+            .execute(&self.db)
+            .await
+            .map_err(|err| DBError::Other(Box::new(err)))?;
 
         Ok(())
     }
 
     async fn get_answers(&self, question_uuid: String) -> Result<Vec<AnswerDetail>, DBError> {
-        let uuid = sqlx::types::Uuid::parse_str(&question_uuid)
-            .map_err(|_| DBError::InvalidUUID(format!("Error parsing the UUID : {}", question_uuid)))?;
+        let uuid = sqlx::types::Uuid::parse_str(&question_uuid).map_err(|_| {
+            DBError::InvalidUUID(format!("Error parsing the UUID : {}", question_uuid))
+        })?;
 
         let records = sqlx::query!("SELECT * FROM answers WHERE question_uuid = $1", uuid)
-        .fetch_all(&self.db)
-        .await
-        .map_err(|err| DBError::Other(Box::new(err)))?;
+            .fetch_all(&self.db)
+            .await
+            .map_err(|err| DBError::Other(Box::new(err)))?;
 
         // Iterate over `records` and map each record to a `AnswerDetail` type
         let answers = records
             .iter()
-            .map(|answer| AnswerDetail { 
-                answer_uuid: answer.answer_uuid.to_string(), 
-                question_uuid: answer.question_uuid.to_string(), 
-                content: answer.content.to_owned(), 
-                created_at: answer.created_at.to_string() 
+            .map(|answer| AnswerDetail {
+                answer_uuid: answer.answer_uuid.to_string(),
+                question_uuid: answer.question_uuid.to_string(),
+                content: answer.content.to_owned(),
+                created_at: answer.created_at.to_string(),
             })
             .collect();
-            
+
         Ok(answers)
     }
 }
