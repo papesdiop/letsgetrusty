@@ -83,24 +83,28 @@ impl Auth for AuthService {
 
         let req = request.into_inner();
 
-        let result: Result<(), String> = match self.users_service.lock() {
-            Ok(mut user_svc) => user_svc.create_user(req.username, req.password),
-            Err(poisonned) => panic!("{}", poisonned),
-        }; // Create a new user through `users_service`. Panic if the lock is poisoned.
+        let result = self
+            .users_service
+            .lock()
+            .expect("lock should not be poisoned")
+            .create_user(req.username, req.password);
 
-        // TODO: Return a `SignUpResponse` with the appropriate `status_code` based on `result`.
         match result {
             Ok(_) => {
-                return Ok(Response::new(SignUpResponse {
+                let reply = SignUpResponse {
                     status_code: StatusCode::Success.into(),
-                }))
+                };
+
+                Ok(Response::new(reply))
             }
             Err(_) => {
-                return Ok(Response::new(SignUpResponse {
+                let reply = SignUpResponse {
                     status_code: StatusCode::Failure.into(),
-                }))
+                };
+
+                Ok(Response::new(reply))
             }
-        };
+        }
     }
 
     async fn sign_out(
