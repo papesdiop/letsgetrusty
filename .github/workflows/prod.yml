@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - microservice-project
-   pull_request:
+  pull_request:
     branches:
       - microservice-project
 
