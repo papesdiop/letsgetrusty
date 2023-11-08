@@ -42,7 +42,7 @@ enum Commands {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // AUTH_SERVICE_IP can be set to your droplet's ip address once your app is deployed
-    let auth_ip = env::var("AUTH_SERVICE_IP").unwrap_or("[::0]".to_owned());
+    let auth_ip = env::var("AUTH_SERVICE_IP").unwrap_or("localhost".to_owned());
     let mut client: AuthClient<Channel> = AuthClient::connect(format!("http://{}:50051", auth_ip)).await?;// Create new `AuthClient` instance. Propagate any errors.
 
     let cli = Cli::parse();
